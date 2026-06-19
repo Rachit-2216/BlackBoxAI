@@ -7,14 +7,20 @@ import torch.nn as nn
 import torch.nn.functional as F
 from typing import Optional
 
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+try:
+    from ..config import (
+        SIGNATURE_FEATURE_DIM, FUSION_HIDDEN_DIM_1, FUSION_HIDDEN_DIM_2,
+        METADATA_FEATURE_DIM, ENTROPY_VECTOR_DIM, NUM_CLASSES, EMBEDDING_DIM
+    )
+except ImportError:  # pragma: no cover - direct script compatibility
+    import sys
+    import os
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from config import (
-    SIGNATURE_FEATURE_DIM, FUSION_HIDDEN_DIM_1, FUSION_HIDDEN_DIM_2,
-    METADATA_FEATURE_DIM, ENTROPY_VECTOR_DIM, NUM_CLASSES, EMBEDDING_DIM
-)
+    from config import (  # type: ignore
+        SIGNATURE_FEATURE_DIM, FUSION_HIDDEN_DIM_1, FUSION_HIDDEN_DIM_2,
+        METADATA_FEATURE_DIM, ENTROPY_VECTOR_DIM, NUM_CLASSES, EMBEDDING_DIM
+    )
 
 
 class FusionClassifier(nn.Module):

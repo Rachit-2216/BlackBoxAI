@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: blackboxai-api
+    env: docker
+    plan: starter
+    healthCheckPath: /api/health
+    envVars:
+      - key: MODEL_API_CORS_ORIGINS
+        sync: false
+      - key: MODEL_API_MAX_UPLOAD_MB
+        value: "25"

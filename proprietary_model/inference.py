@@ -1,6 +1,7 @@
 """
 Inference script for Proprietary Firmware Cryptographic Primitive Detection Model
 """
+from contextlib import contextmanager
 import os
 import sys
 from typing import Dict, List
@@ -10,6 +11,9 @@ import torch.nn.functional as F
 import numpy as np
 
 if __package__:
+    from . import config as _compat_config
+    from . import models as _compat_models
+    from . import utils as _compat_utils
     from .config import (
         DEVICE,
         CHECKPOINT_PATH,
@@ -21,11 +25,17 @@ if __package__:
         PROPRIETARY_ALGORITHMS,
     )
     from .models.proprietary_signature_scanner import ProprietarySignatureScanner
+    from .models import proprietary_signature_scanner as _compat_signature_scanner
     from .models.proprietary_transformer import ProprietaryTransformerEncoder
+    from .models import proprietary_transformer as _compat_transformer
     from .models.proprietary_fusion import ProprietaryFusionClassifier
+    from .models import proprietary_fusion as _compat_fusion
     from .utils.proprietary_tokenizer import ProprietaryOpcodeTokenizer
+    from .utils import proprietary_tokenizer as _compat_tokenizer
     from .utils.entropy_utils import get_entropy_features
+    from .utils import entropy_utils as _compat_entropy
     from .utils.feature_extractor import FeatureExtractor
+    from .utils import feature_extractor as _compat_feature_extractor
 else:
     sys.path.append(os.path.dirname(os.path.abspath(__file__)))
     from config import (  # type: ignore
@@ -44,6 +54,40 @@ else:
     from utils.proprietary_tokenizer import ProprietaryOpcodeTokenizer  # type: ignore
     from utils.entropy_utils import get_entropy_features  # type: ignore
     from utils.feature_extractor import FeatureExtractor  # type: ignore
+
+
+_MISSING_MODULE = object()
+
+
+@contextmanager
+def checkpoint_import_aliases():
+    """Map old checkpoint pickle module paths to package modules while loading."""
+    if not __package__:
+        yield
+        return
+
+    aliases = {
+        "config": _compat_config,
+        "models": _compat_models,
+        "models.proprietary_signature_scanner": _compat_signature_scanner,
+        "models.proprietary_transformer": _compat_transformer,
+        "models.proprietary_fusion": _compat_fusion,
+        "utils": _compat_utils,
+        "utils.proprietary_tokenizer": _compat_tokenizer,
+        "utils.entropy_utils": _compat_entropy,
+        "utils.feature_extractor": _compat_feature_extractor,
+    }
+    previous = {name: sys.modules.get(name, _MISSING_MODULE) for name in aliases}
+
+    try:
+        sys.modules.update(aliases)
+        yield
+    finally:
+        for name, module in previous.items():
+            if module is _MISSING_MODULE:
+                sys.modules.pop(name, None)
+            else:
+                sys.modules[name] = module
 
 
 class ProprietaryInference:
@@ -90,7 +134,8 @@ class ProprietaryInference:
         
         print(f"Loading model from {self.checkpoint_path}...", flush=True)
         print("  - Reading checkpoint file (this may take 10-30 seconds)...", flush=True)
-        checkpoint = torch.load(self.checkpoint_path, map_location=self.device, weights_only=False)
+        with checkpoint_import_aliases():
+            checkpoint = torch.load(self.checkpoint_path, map_location=self.device, weights_only=False)
         print("  - Checkpoint loaded, parsing config...", flush=True)
         
         # Get config
@@ -284,11 +329,15 @@ class ProprietaryInference:
             temp_features.get('mul_ops', 0),
             top_operation
         )
+        recommendations = self._get_recommendations(top_operation, float(top_prob), sig_features)
         
         # Build result in dataset format (algorithm name + binary features only)
         result = {
             # Algorithm name (not operation label)
             'algorithm_name': algorithm_name,
+            'operation': top_operation,
+            'confidence': float(top_prob),
+            'recommendations': recommendations,
             # Binary features matching dataset format
             **binary_features,
         }

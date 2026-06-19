@@ -8,14 +8,20 @@ import numpy as np
 from typing import Dict, List, Optional
 import struct
 
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+try:
+    from ..config import (
+        SIGNATURE_FEATURE_DIM, ENTROPY_THRESHOLD,
+        HIGH_XOR_THRESHOLD, HIGH_SHIFT_THRESHOLD, HIGH_ARITHMETIC_THRESHOLD
+    )
+except ImportError:  # pragma: no cover - direct script compatibility
+    import sys
+    import os
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from config import (
-    SIGNATURE_FEATURE_DIM, ENTROPY_THRESHOLD,
-    HIGH_XOR_THRESHOLD, HIGH_SHIFT_THRESHOLD, HIGH_ARITHMETIC_THRESHOLD
-)
+    from config import (  # type: ignore
+        SIGNATURE_FEATURE_DIM, ENTROPY_THRESHOLD,
+        HIGH_XOR_THRESHOLD, HIGH_SHIFT_THRESHOLD, HIGH_ARITHMETIC_THRESHOLD
+    )
 
 
 class ProprietarySignatureScanner:

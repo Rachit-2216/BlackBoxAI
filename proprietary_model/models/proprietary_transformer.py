@@ -8,14 +8,20 @@ import torch.nn.functional as F
 from typing import Optional
 import math
 
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+try:
+    from ..config import (
+        EMBEDDING_DIM, NUM_LAYERS, NUM_HEADS, FEEDFORWARD_DIM,
+        DROPOUT, MAX_SEQ_LENGTH, NUM_OPERATION_CLASSES
+    )
+except ImportError:  # pragma: no cover - direct script compatibility
+    import sys
+    import os
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from config import (
-    EMBEDDING_DIM, NUM_LAYERS, NUM_HEADS, FEEDFORWARD_DIM,
-    DROPOUT, MAX_SEQ_LENGTH, NUM_OPERATION_CLASSES
-)
+    from config import (  # type: ignore
+        EMBEDDING_DIM, NUM_LAYERS, NUM_HEADS, FEEDFORWARD_DIM,
+        DROPOUT, MAX_SEQ_LENGTH, NUM_OPERATION_CLASSES
+    )
 
 
 class MultiHeadAttentionWithRelativePosition(nn.Module):

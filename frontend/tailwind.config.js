@@ -75,7 +75,9 @@ module.exports = {
         },
       },
       fontFamily: {
-        inter: ['Inter', 'sans-serif'],
+        display: ['"Oxanium"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        inter: ['"Oxanium"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        mono: ['"IBM Plex Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
       },
       borderRadius: {
         lg: "var(--radius)",

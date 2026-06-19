@@ -2,6 +2,7 @@
 Inference pipeline for Standard Firmware Cryptographic Primitive Detection Model
 """
 import argparse
+from contextlib import contextmanager
 import os
 import sys
 from typing import Dict, List, Tuple
@@ -9,6 +10,9 @@ from typing import Dict, List, Tuple
 import torch
 
 if __package__:
+    from . import config as _compat_config
+    from . import models as _compat_models
+    from . import utils as _compat_utils
     from .config import (
         DEVICE,
         CHECKPOINT_PATH,
@@ -20,11 +24,17 @@ if __package__:
         ENTROPY_VECTOR_DIM,
     )
     from .models.signature_scanner import SignatureScanner
+    from .models import signature_scanner as _compat_signature_scanner
     from .models.transformer_encoder import TransformerEncoder
+    from .models import transformer_encoder as _compat_transformer_encoder
     from .models.fusion_classifier import FusionClassifier
+    from .models import fusion_classifier as _compat_fusion_classifier
     from .utils.opcode_tokenizer import OpcodeTokenizer
+    from .utils import opcode_tokenizer as _compat_opcode_tokenizer
     from .utils.entropy import get_entropy_distribution_vector, find_high_entropy_regions
+    from .utils import entropy as _compat_entropy
     from .utils.metadata_parser import extract_metadata, metadata_to_vector
+    from .utils import metadata_parser as _compat_metadata_parser
 else:
     sys.path.append(os.path.dirname(os.path.abspath(__file__)))
     from config import (  # type: ignore
@@ -43,6 +53,40 @@ else:
     from utils.opcode_tokenizer import OpcodeTokenizer  # type: ignore
     from utils.entropy import get_entropy_distribution_vector, find_high_entropy_regions  # type: ignore
     from utils.metadata_parser import extract_metadata, metadata_to_vector  # type: ignore
+
+
+_MISSING_MODULE = object()
+
+
+@contextmanager
+def checkpoint_import_aliases():
+    """Map old checkpoint pickle module paths to package modules while loading."""
+    if not __package__:
+        yield
+        return
+
+    aliases = {
+        "config": _compat_config,
+        "models": _compat_models,
+        "models.signature_scanner": _compat_signature_scanner,
+        "models.transformer_encoder": _compat_transformer_encoder,
+        "models.fusion_classifier": _compat_fusion_classifier,
+        "utils": _compat_utils,
+        "utils.opcode_tokenizer": _compat_opcode_tokenizer,
+        "utils.entropy": _compat_entropy,
+        "utils.metadata_parser": _compat_metadata_parser,
+    }
+    previous = {name: sys.modules.get(name, _MISSING_MODULE) for name in aliases}
+
+    try:
+        sys.modules.update(aliases)
+        yield
+    finally:
+        for name, module in previous.items():
+            if module is _MISSING_MODULE:
+                sys.modules.pop(name, None)
+            else:
+                sys.modules[name] = module
 
 
 class CryptoDetector:
@@ -65,7 +109,8 @@ class CryptoDetector:
         print(f"Loading model from {checkpoint_path}...")
         
         # Load checkpoint
-        checkpoint = torch.load(checkpoint_path, map_location=DEVICE, weights_only=False)
+        with checkpoint_import_aliases():
+            checkpoint = torch.load(checkpoint_path, map_location=DEVICE, weights_only=False)
         
         # Load tokenizer
         self.tokenizer = checkpoint.get('tokenizer')
@@ -156,15 +201,19 @@ class CryptoDetector:
             "eor", "ror", "rol", "lsl", "lsr"
         ]
         
-        # Generate sequence based on binary size
+        # Generate a deterministic pseudo-disassembly based on byte positions.
+        # This keeps the research/demo pipeline reproducible until a real
+        # disassembler such as Capstone or radare2 is integrated.
         sequence = []
         num_instructions = min(len(binary_data) // 4, 200)  # Approximate
-        
-        import numpy as np
+
         for i in range(num_instructions):
-            opcode = opcodes[i % len(opcodes)]
-            reg1 = f"r{np.random.randint(0, 16)}"
-            reg2 = f"r{np.random.randint(0, 16)}"
+            offset = (i * 4) % len(binary_data)
+            window = binary_data[offset:offset + 4]
+            padded = window + b"\x00" * (4 - len(window))
+            opcode = opcodes[(padded[0] + i) % len(opcodes)]
+            reg1 = f"r{(padded[1] + i) % 16}"
+            reg2 = f"r{(padded[2] + padded[3] + i) % 16}"
             sequence.append(f"{opcode} {reg1}, {reg2}")
         
         return sequence

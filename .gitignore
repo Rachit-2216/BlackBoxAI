@@ -30,6 +30,9 @@ frontend/.env.*.local
 # Logs and generated outputs
 *.log
 datasets/**/*_results.csv
+frontend/qa-screenshots/
+AGENT_CONTEXT.md
+HUMAN_PROJECT_GUIDE.md
 
 # Misc
 *.tmp

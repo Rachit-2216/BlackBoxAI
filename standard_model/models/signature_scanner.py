@@ -7,15 +7,22 @@ from typing import Dict, List, Optional
 import numpy as np
 import struct
 
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+try:
+    from ..config import (
+        AES_SBOX, SHA256_K, MD5_INIT, ECC_P256_PRIME, RSA_OID_PATTERNS,
+        SIGNATURE_FEATURES, SIGNATURE_FEATURE_DIM, ENTROPY_THRESHOLD
+    )
+    from ..utils.entropy import calculate_shannon_entropy, has_high_entropy
+except ImportError:  # pragma: no cover - direct script compatibility
+    import sys
+    import os
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from config import (
-    AES_SBOX, SHA256_K, MD5_INIT, ECC_P256_PRIME, RSA_OID_PATTERNS,
-    SIGNATURE_FEATURES, SIGNATURE_FEATURE_DIM, ENTROPY_THRESHOLD
-)
-from utils.entropy import calculate_shannon_entropy, has_high_entropy
+    from config import (  # type: ignore
+        AES_SBOX, SHA256_K, MD5_INIT, ECC_P256_PRIME, RSA_OID_PATTERNS,
+        SIGNATURE_FEATURES, SIGNATURE_FEATURE_DIM, ENTROPY_THRESHOLD
+    )
+    from utils.entropy import calculate_shannon_entropy, has_high_entropy  # type: ignore
 
 
 class SignatureScanner:

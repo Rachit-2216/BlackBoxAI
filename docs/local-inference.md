@@ -1,16 +1,26 @@
 # Local Inference Workflow
 
-This guide shows how to run both model pipelines against the bundled sample datasets.
+This guide shows how to run both model pipelines against the bundled sample datasets without using the web UI.
 
-## Run Both Models
+## Run Through the API
 
-From the repository root:
+Start the server from the repository root:
 
 ```powershell
-.\run_sample_inference.bat
+python api_server.py
 ```
 
-That helper script runs the standard model first and then the proprietary model.
+Then submit the bundled CSVs:
+
+```powershell
+curl.exe -X POST "http://localhost:5000/api/standard/inference?format=json" `
+  -F "file=@datasets/Standard/standard_test_dataset.csv"
+```
+
+```powershell
+curl.exe -X POST "http://localhost:5000/api/proprietary/inference?format=json" `
+  -F "file=@datasets/Proprietary/proprietary_data_test.csv"
+```
 
 ## Run Models Individually
 
@@ -48,12 +58,15 @@ python run_inference_simple.py
 
 - `fileId`
 - `algorithm_name`
+- `operation`
+- `confidence`
 - proprietary feature flags such as `has_sbox` and `key_schedule`
+- `recommendations`
 
 ## Troubleshooting
 
-- Verify the checkpoint files exist:
+- Verify checkpoint files exist:
   - `standard_model/checkpoints/standard_model.pt`
   - `proprietary_model/checkpoints/proprietary_model.pt`
-- Verify the sample CSV files still exist under `datasets/`
-- Install required Python dependencies before running inference
+- Verify sample CSV files still exist under `datasets/`.
+- Install required Python dependencies before running inference.

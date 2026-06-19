@@ -1,96 +1,98 @@
 import { Link, useLocation } from "react-router-dom";
-import { 
-  LayoutDashboard, 
-  Upload, 
-  FileSearch, 
-  Network, 
-  Shield, 
-  Code, 
-  Settings,
-  ChevronLeft,
-  ChevronRight,
-  Activity
+import {
+  Activity,
+  Code2,
+  FileSearch,
+  LayoutDashboard,
+  Network,
+  Shield,
+  Upload,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
 
 const navItems = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/" },
-  { icon: Upload, label: "Firmware Upload", path: "/upload" },
-  { icon: FileSearch, label: "Analysis Results", path: "/results" },
-  { icon: Network, label: "Protocol Mapping", path: "/protocol" },
-  { icon: Shield, label: "Risk & Compliance", path: "/compliance" },
-  { icon: Code, label: "API Integration", path: "/api" },
-  { icon: Settings, label: "Settings", path: "/settings" },
+  { icon: LayoutDashboard, label: "Command", path: "/" },
+  { icon: Upload, label: "Upload", path: "/upload" },
+  { icon: FileSearch, label: "Results", path: "/results" },
+  { icon: Network, label: "Protocol", path: "/protocol" },
+  { icon: Shield, label: "Risk", path: "/compliance" },
+  { icon: Code2, label: "API", path: "/api" },
 ];
 
 export const Sidebar = () => {
   const location = useLocation();
-  const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <aside 
-      className={cn(
-        "fixed left-0 top-0 h-screen bg-sidebar border-r border-sidebar-border transition-all duration-300 z-50",
-        collapsed ? "w-16" : "w-64"
-      )}
-    >
-      <div className="flex flex-col h-full">
-        {/* Logo */}
-        <div className="p-6 border-b border-sidebar-border flex items-center justify-between">
-          {!collapsed && (
-            <div className="flex items-center gap-2">
-              <Activity className="h-6 w-6 text-primary" />
-              <span className="font-inter text-xl font-semibold text-foreground">BlackBox AI</span>
-            </div>
-          )}
-          {collapsed && <Activity className="h-6 w-6 text-primary mx-auto" />}
-        </div>
+    <>
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-72 border-r border-white/10 bg-black/45 px-5 py-6 backdrop-blur-2xl lg:block">
+        <Link to="/" className="group flex items-center gap-3">
+          <div className="grid h-12 w-12 place-items-center border border-cyan-300/40 bg-cyan-300/10 shadow-[0_0_28px_rgba(34,211,238,0.22)]">
+            <Activity className="h-6 w-6 text-cyan-200" />
+          </div>
+          <div>
+            <p className="font-display text-xl font-semibold tracking-wide">BlackBoxAI</p>
+            <p className="font-mono text-xs uppercase text-muted-foreground">crypto firmware lab</p>
+          </div>
+        </Link>
 
-        {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-2">
+        <nav className="mt-10 space-y-2">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
-            
+
             return (
               <Link
                 key={item.path}
                 to={item.path}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200",
-                  "hover:bg-sidebar-accent",
-                  isActive && "bg-sidebar-accent text-primary",
-                  !isActive && "text-sidebar-foreground hover:text-primary"
+                  "relative flex items-center gap-3 border border-transparent px-4 py-3 font-medium transition-colors",
+                  isActive
+                    ? "border-cyan-300/30 bg-cyan-300/10 text-cyan-100"
+                    : "text-muted-foreground hover:border-white/10 hover:bg-white/[0.04] hover:text-foreground",
                 )}
               >
-                <Icon className="h-5 w-5 flex-shrink-0" />
-                {!collapsed && <span className="font-medium">{item.label}</span>}
+                {isActive && (
+                  <motion.span
+                    layoutId="sidebar-active"
+                    className="absolute inset-y-2 left-0 w-1 bg-cyan-300 shadow-[0_0_18px_rgba(34,211,238,0.75)]"
+                  />
+                )}
+                <Icon className="h-5 w-5" />
+                <span>{item.label}</span>
               </Link>
             );
           })}
         </nav>
 
-        {/* Collapse Toggle */}
-        <div className="p-4 border-t border-sidebar-border">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setCollapsed(!collapsed)}
-            className="w-full justify-center hover:bg-sidebar-accent"
-          >
-            {collapsed ? (
-              <ChevronRight className="h-4 w-4" />
-            ) : (
-              <>
-                <ChevronLeft className="h-4 w-4 mr-2" />
-                <span>Collapse</span>
-              </>
-            )}
-          </Button>
+        <div className="absolute bottom-6 left-5 right-5 border border-emerald-300/20 bg-emerald-300/5 p-4">
+          <p className="font-mono text-xs uppercase text-emerald-200">engine status</p>
+          <div className="mt-3 flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">standard + proprietary</span>
+            <span className="h-2 w-2 bg-emerald-300 shadow-[0_0_16px_rgba(110,231,183,0.9)]" />
+          </div>
         </div>
-      </div>
-    </aside>
+      </aside>
+
+      <nav className="fixed bottom-0 left-0 right-0 z-50 grid grid-cols-6 border-t border-white/10 bg-black/80 backdrop-blur-xl lg:hidden">
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = location.pathname === item.path;
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={cn(
+                "flex flex-col items-center gap-1 px-2 py-3 text-[11px]",
+                isActive ? "text-cyan-200" : "text-muted-foreground",
+              )}
+            >
+              <Icon className="h-5 w-5" />
+              <span>{item.label}</span>
+            </Link>
+          );
+        })}
+      </nav>
+    </>
   );
 };
