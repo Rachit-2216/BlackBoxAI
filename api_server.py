@@ -3,9 +3,9 @@ Local Flask API for BlackBoxAI model inference.
 """
 from __future__ import annotations
 
+import os
 import hashlib
 import io
-import os
 import secrets
 from typing import Any, Literal
 
