@@ -5,7 +5,7 @@ BlackBoxAI is a cybersecurity and machine-learning portfolio demo for firmware c
 - `standard_model/` detects known primitives such as AES, RSA, SHA, HMAC, and ECC.
 - `proprietary_model/` classifies custom or non-standard cryptographic patterns.
 - `api_server.py` exposes both pipelines through a Flask/PyTorch API.
-- `frontend/` provides a React/Vite command-center UI with Motion animations, real upload flows, and local browser run memory.
+- `frontend/` is a standalone React/Vite landing page with an interactive Three.js firmware core, scroll-linked analysis diagrams, and an illustrative evidence lab. It needs no backend or environment variables.
 
 ## Repository Layout
 
@@ -28,7 +28,17 @@ BlackBoxAI is a cybersecurity and machine-learning portfolio demo for firmware c
 - Firmware-like binary upload is available at `POST /api/standard/analyze-binary` and `POST /api/proprietary/analyze-binary`.
 - `GET /api/model-info` exposes labels, thresholds, extension allowlists, and upload limits.
 - Uploads are validated by extension and size, processed without persisted upload files, and served with explicit CORS/security headers.
-- The frontend stores recent JSON analysis runs in `localStorage`; bundled sample data is used only as an offline fallback.
+- The public frontend uses three clearly marked illustrative samples. It supports sample switching, evidence tabs, scan replay, and JSON demo-report export without uploading files or invoking model inference.
+
+## Frontend-Only Preview
+
+```powershell
+cd frontend
+npm ci
+npm run dev
+```
+
+The landing page works independently of Python, model weights, and API configuration. The earlier tool-page source remains in the repository but is not mounted by the current landing-page entry point.
 
 ## Quick Start
 
@@ -54,16 +64,17 @@ npm install
 npm run dev
 ```
 
-Create `frontend/.env` from `frontend/.env.example` to point the UI at a different backend URL.
+No environment file is required for the landing page.
 
 ## Deployment
 
-The intended hosted split is:
+The public site runs entirely on Vercel:
 
-- Render: Docker service from the repository root, health check `/api/health`.
-- Vercel: frontend project root `frontend`, build command `npm run build`, output directory `dist`.
+- Vercel project root: repository root (`.`). The root `vercel.json` installs and builds `frontend/`, then serves `frontend/dist` with SPA fallback and security headers.
+- Alternatively, a Vercel project rooted in `frontend/` can use its local configuration with `npm run build` and output directory `dist`.
+- The Python API can be run separately on Render using the Docker service and `/api/health`. It is optional for the public landing page.
 
-After the Render API is live, set this Vercel environment variable:
+For development of the legacy API-connected tool screens only:
 
 ```dotenv
 VITE_API_URL=https://your-render-api.onrender.com

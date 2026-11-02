@@ -31,6 +31,7 @@ frontend/.env.*.local
 *.log
 datasets/**/*_results.csv
 frontend/qa-screenshots/
+.playwright-cli/
 AGENT_CONTEXT.md
 HUMAN_PROJECT_GUIDE.md
 

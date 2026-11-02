@@ -3,7 +3,7 @@ import { AlertCircle, CheckCircle, Download, Loader2, Upload } from "lucide-reac
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { API_BASE_URL, checkHealth, runProprietaryInference, runStandardInference } from "@/lib/api";
+import { API_BASE_URL, checkHealth, analyzeProprietaryCsv, analyzeStandardCsv } from "@/lib/api";
 
 type ModelType = "proprietary" | "standard";
 type ApiStatus = "checking" | "ready" | "error";
@@ -75,9 +75,9 @@ export const ModelInference = () => {
 
     try {
       if (modelType === "proprietary") {
-        await runProprietaryInference(selectedFile);
+        await analyzeProprietaryCsv(selectedFile, "csv");
       } else {
-        await runStandardInference(selectedFile);
+        await analyzeStandardCsv(selectedFile, "csv");
       }
 
       setProgress(100);

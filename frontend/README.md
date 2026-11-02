@@ -1,6 +1,6 @@
 # BlackBoxAI Frontend
 
-React/Vite command-center UI for the BlackBoxAI model API.
+Standalone React/Vite landing page for BlackBoxAI. No Python process, model server, uploads, or environment variables are needed.
 
 ## Commands
 
@@ -9,26 +9,33 @@ npm install
 npm run dev
 npm run lint
 npm run build
+npm run test:ui-contract
 ```
 
-## Environment
+Browser checks expect the local preview at `http://127.0.0.1:5186`; start it with `npm run dev -- --port 5186`. Set `LANDING_URL` to test another local or deployed URL. On Windows the checks use installed Chrome; elsewhere run `npx playwright install chromium` first. Screenshots are written to the ignored `qa-screenshots/` directory.
 
-Create `frontend/.env` from `frontend/.env.example`:
+## Experience
 
-```dotenv
-VITE_API_URL=http://localhost:5000
-VITE_HEYGEN_PROMO_URL=
-```
+- A lazy-loaded Three.js silver core that responds to the pointer, scroll, and its open/reassemble button.
+- A scroll-linked analysis sequence with three manually selectable stages.
+- A browser-only evidence lab with three illustrative samples, keyboard-accessible tabs, scan replay, and JSON demo-report export.
+- Responsive navigation, expandable field notes, reduced-motion support, and a static WebGL fallback.
 
-`VITE_API_URL` points to the Flask API. In production, set it to the Render API domain.
+## Editing
 
-`VITE_HEYGEN_PROMO_URL` is optional. When set to an MP4 URL, the dashboard displays that video in the promo slot.
+- `src/pages/Landing.tsx`: page structure, content, navigation, pipeline, and field notes.
+- `src/landing.css`: responsive layouts, typography, color tokens, and CSS motion.
+- `src/components/landing/FirmwareCore.tsx`: procedural 3D geometry, lighting, pointer and scroll response.
+- `src/components/landing/EvidenceLab.tsx`: sample data and interactive evidence views.
+
+All sample results are illustrative and explicitly marked. The older API-connected tool components remain available in source but are not mounted in `App.tsx`.
 
 ## Vercel
 
-- Project root: `frontend`
-- Build command: `npm run build`
-- Output directory: `dist`
-- Required env: `VITE_API_URL=https://your-render-api.onrender.com`
+- Existing project root: repository root (`.`).
+- Install command: `npm ci --prefix frontend`.
+- Build command: `npm run build --prefix frontend`.
+- Output directory: `frontend/dist`.
+- Required environment variables: none.
 
-The included `vercel.json` provides SPA refresh fallback and security headers.
+The root `vercel.json` provides these build settings, SPA fallback, and security headers. A project rooted directly in `frontend/` can use the configuration in that directory instead.
