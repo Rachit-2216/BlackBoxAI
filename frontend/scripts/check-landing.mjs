@@ -33,15 +33,11 @@ async function heroFits() {
     const cta = document
       .querySelector(".hero-bottom .button")
       .getBoundingClientRect();
-    const toggle = document
-      .querySelector(".core-toggle")
-      .getBoundingClientRect();
     const strip = document
       .querySelector(".capability-strip")
       .getBoundingClientRect();
     return {
       cta: cta.bottom,
-      toggle: toggle.bottom,
       strip: strip.top,
       height: innerHeight,
     };
@@ -50,11 +46,45 @@ async function heroFits() {
     fit.cta <= fit.height - 12,
     `Hero action below viewport: ${JSON.stringify(fit)}`,
   );
-  assert(fit.toggle < fit.cta, "Core control overlaps primary action");
   assert(
     fit.strip < fit.height,
     "Hero does not leave a hint of the next section",
   );
+}
+async function checkScrollCore() {
+  assert.equal(
+    await page
+      .getByRole("button", { name: /Open the black box|Reassemble core/ })
+      .count(),
+    0,
+    "Click-to-open control is still present",
+  );
+  const initial = await page.locator(".hero").boundingBox();
+  const closed = await page.locator("canvas").screenshot();
+  await page.evaluate(() => scrollTo({ top: 240, behavior: "instant" }));
+  await pause();
+  const held = await page.locator(".hero").boundingBox();
+  assert(
+    Math.abs(held.y - initial.y) <= 1,
+    `Hero moved before the cube opened: ${JSON.stringify({ initial, held, layout: await page.locator(".hero-pin").evaluate((element) => ({ position: getComputedStyle(element).position, top: getComputedStyle(element).top, parent: element.parentElement.getBoundingClientRect().toJSON(), padding: getComputedStyle(element.parentElement).paddingBottom })) })}`,
+  );
+  const opening = await page.locator("canvas").screenshot();
+  assert(!closed.equals(opening), "Cube did not change while scrolling");
+  await page.evaluate(() => scrollTo({ top: 400, behavior: "instant" }));
+  await pause();
+  assert(
+    Math.abs((await page.locator(".hero").boundingBox()).y - initial.y) <= 1,
+    "Hero released before the open hold ended",
+  );
+  await page.screenshot({ path: `${directory}/landing-open-core.png` });
+  await page.evaluate(() => scrollTo({ top: 620, behavior: "instant" }));
+  await pause();
+  assert(
+    (await page.locator(".hero").boundingBox()).y < initial.y - 100,
+    "Hero did not release after opening",
+  );
+  await page.evaluate(() => scrollTo({ top: 0, behavior: "instant" }));
+  await pause();
 }
 async function checkContrast() {
   const contrast = await page.locator(".button-acid").evaluate((element) => {
@@ -112,16 +142,7 @@ try {
     return visible;
   }, canvasPng.toString("base64"));
   assert(pixels > 100, `Blank 3D canvas: ${pixels} visible pixels`);
-  await page
-    .getByRole("button", { name: "Open the black box", exact: true })
-    .click();
-  await pause();
-  assert(
-    (await page
-      .getByRole("button", { name: "Reassemble core" })
-      .getAttribute("aria-pressed")) === "true",
-  );
-  await page.screenshot({ path: `${directory}/landing-open-core.png` });
+  await checkScrollCore();
   await page.locator("#process").scrollIntoViewIfNeeded();
   await page.getByRole("button", { name: /02.*RECOGNIZE/ }).click();
   await pause();
@@ -223,6 +244,7 @@ try {
   await noOverflow();
   await heroFits();
   await page.screenshot({ path: `${directory}/landing-mobile.png` });
+  await checkScrollCore();
   await page.getByRole("button", { name: "Open navigation" }).click();
   await page
     .getByRole("navigation")
@@ -246,12 +268,18 @@ try {
   await noOverflow();
   await page.screenshot({ path: `${directory}/landing-mobile-lab.png` });
   await page.evaluate(() => {
-    const section = document.querySelector('.signal-passage');
-    scrollTo({ top: section.getBoundingClientRect().top + scrollY + (section.offsetHeight - innerHeight) * .52, behavior: 'instant' });
+    const section = document.querySelector(".signal-passage");
+    scrollTo({
+      top:
+        section.getBoundingClientRect().top +
+        scrollY +
+        (section.offsetHeight - innerHeight) * 0.52,
+      behavior: "instant",
+    });
   });
   await page.waitForTimeout(1200);
   await noOverflow();
-  await page.screenshot({path:`${directory}/landing-mobile-signal.png`});
+  await page.screenshot({ path: `${directory}/landing-mobile-signal.png` });
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.reload({ waitUntil: "networkidle" });
   await page.evaluate(() => scrollTo({ top: 0, behavior: "instant" }));
@@ -261,6 +289,20 @@ try {
       () => getComputedStyle(document.documentElement).scrollBehavior,
     ),
     "auto",
+  );
+  assert.equal(
+    await page
+      .locator(".hero-pin")
+      .evaluate((element) => getComputedStyle(element).position),
+    "relative",
+    "Reduced motion still pins the hero",
+  );
+  assert.equal(
+    await page
+      .locator(".hero-sequence")
+      .evaluate((element) => getComputedStyle(element).paddingBottom),
+    "0px",
+    "Reduced motion adds an empty scroll hold",
   );
   await page.screenshot({ path: `${directory}/landing-reduced-motion.png` });
   assert.equal(
@@ -288,7 +330,8 @@ try {
         canvasPixels: pixels,
         checks: [
           "WebGL",
-          "open core",
+          "scroll-only core opening",
+          "hero pins during opening and releases afterward",
           "pipeline",
           "sample switching",
           "tabs",

@@ -2,6 +2,7 @@ import {
   lazy,
   Suspense,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type ReactNode,
@@ -322,19 +323,29 @@ function FAQ() {
 }
 
 export default function Landing() {
-  const hero = useRef<HTMLElement>(null);
+  const heroSequence = useRef<HTMLDivElement>(null);
+  const heroPin = useRef<HTMLDivElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [opened, setOpened] = useState(false);
   const reduced = !!useReducedMotion();
-  const { scrollYProgress } = useScroll();
+  const { scrollYProgress, scrollY } = useScroll();
   const progress = useSpring(scrollYProgress, { stiffness: 100, damping: 30 });
   const beaconY = useTransform(progress, [0, 1], [0, 250]);
   const beaconRotation = useTransform(progress, [0, 1], [0, 720]);
-  const { scrollYProgress: heroProgress } = useScroll({
-    target: hero,
-    offset: ["start start", "end start"],
-  });
-  const titleY = useTransform(heroProgress, [0, 1], [0, reduced ? 0 : -65]);
+  const heroProgress = useTransform(scrollY, [0, 320], [0, 1]);
+  useLayoutEffect(() => {
+    const sequence = heroSequence.current;
+    const pin = heroPin.current;
+    if (!sequence || !pin) return;
+    const measure = () =>
+      sequence.style.setProperty(
+        "--hero-content-height",
+        `${pin.getBoundingClientRect().height}px`,
+      );
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(pin);
+    return () => observer.disconnect();
+  }, []);
   useEffect(() => {
     function closeOnEscape(event: KeyboardEvent) {
       if (event.key === "Escape") setMenuOpen(false);
@@ -403,108 +414,99 @@ export default function Landing() {
           </button>
         </header>
         <main id="main">
-          <section className="hero" ref={hero} aria-labelledby="hero-heading">
-            <div className="hero-grid" aria-hidden="true" />
-            <div className="hero-coordinate coordinate-left">
-              BB / 001
-              <br />
-              FIRMWARE INTELLIGENCE
-            </div>
-            <div className="hero-coordinate coordinate-right">
-              RESEARCH PROJECT
-              <br />
-              <span>
-                <i className="status-dot" /> OPEN SOURCE
-              </span>
-            </div>
-            <motion.div
-              className="hero-title"
-              style={{ y: titleY }}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.8 }}
-            >
-              <span className="hero-eyebrow">
-                <span /> LOOK BENEATH THE BINARY
-              </span>
-              <h1 id="hero-heading">
-                <DecodeText text="Nothing stays" />
-                <br />
-                in the{" "}
-                <span>
-                  <DecodeText text="black box." />
+          <div className="hero-sequence" ref={heroSequence}>
+            <div className="hero-pin" ref={heroPin}>
+              <section className="hero" aria-labelledby="hero-heading">
+                <div className="hero-grid" aria-hidden="true" />
+                <div className="hero-coordinate coordinate-left">
+                  BB / 001
+                  <br />
+                  FIRMWARE INTELLIGENCE
+                </div>
+                <div className="hero-coordinate coordinate-right">
+                  RESEARCH PROJECT
+                  <br />
+                  <span>
+                    <i className="status-dot" /> OPEN SOURCE
+                  </span>
+                </div>
+                <motion.div
+                  className="hero-title"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.8 }}
+                >
+                  <span className="hero-eyebrow">
+                    <span /> LOOK BENEATH THE BINARY
+                  </span>
+                  <h1 id="hero-heading">
+                    <DecodeText text="Nothing stays" />
+                    <br />
+                    in the{" "}
+                    <span>
+                      <DecodeText text="black box." />
+                    </span>
+                  </h1>
+                  <p>
+                    Cryptographic patterns. Hidden in firmware.
+                    <br />
+                    Brought into the open.
+                  </p>
+                </motion.div>
+                <div className="hero-object">
+                  <div className="object-orbit" aria-hidden="true" />
+                  <Suspense
+                    fallback={
+                      <div className="core-loading">
+                        <Box size={60} strokeWidth={0.5} />
+                        <span>ASSEMBLING CORE</span>
+                      </div>
+                    }
+                  >
+                    <FirmwareCore progress={heroProgress} reduced={reduced} />
+                  </Suspense>
+                  <span className="object-label label-left">
+                    <span>INPUT / BINARY</span>
+                    <strong>Unknown by default.</strong>
+                    <i />
+                  </span>
+                  <span className="object-label label-right">
+                    <span>OUTPUT / EVIDENCE</span>
+                    <strong>Understood by design.</strong>
+                    <i />
+                  </span>
+                </div>
+                <div className="hero-bottom">
+                  <p>
+                    A firmware cryptography lab.
+                    <br />
+                    <span>Built for the curious. Open to inspection.</span>
+                  </p>
+                  <a href="#lab" className="button button-acid">
+                    Explore the lab <ArrowUpRight size={18} />
+                  </a>
+                  <a className="scroll-cue" href="#process">
+                    SCROLL TO INVESTIGATE <ArrowDown size={17} />
+                  </a>
+                </div>
+              </section>
+              <div className="capability-strip">
+                <span>READ BETWEEN THE BYTES</span>
+                {[
+                  "BINARY ANALYSIS",
+                  "PATTERN RECOGNITION",
+                  "CRYPTOGRAPHIC INTELLIGENCE",
+                ].map((item) => (
+                  <span key={item}>
+                    <Plus size={13} />
+                    {item}
+                  </span>
+                ))}
+                <span className="strip-end">
+                  <Cpu size={15} /> BLACKBOXAI
                 </span>
-              </h1>
-              <p>
-                Cryptographic patterns. Hidden in firmware.
-                <br />
-                Brought into the open.
-              </p>
-            </motion.div>
-            <div className="hero-object">
-              <div className="object-orbit" aria-hidden="true" />
-              <Suspense
-                fallback={
-                  <div className="core-loading">
-                    <Box size={60} strokeWidth={0.5} />
-                    <span>ASSEMBLING CORE</span>
-                  </div>
-                }
-              >
-                <FirmwareCore
-                  opened={opened}
-                  progress={heroProgress}
-                  reduced={reduced}
-                />
-              </Suspense>
-              <span className="object-label label-left">
-                <span>INPUT / BINARY</span>
-                <strong>Unknown by default.</strong>
-                <i />
-              </span>
-              <span className="object-label label-right">
-                <span>OUTPUT / EVIDENCE</span>
-                <strong>Understood by design.</strong>
-                <i />
-              </span>
-              <button
-                className="core-toggle"
-                onClick={() => setOpened(!opened)}
-                aria-pressed={opened}
-              >
-                {opened ? <Minus size={14} /> : <Plus size={14} />}
-                {opened ? "Reassemble core" : "Open the black box"}
-              </button>
+              </div>
             </div>
-            <div className="hero-bottom">
-              <p>
-                A firmware cryptography lab.
-                <br />
-                <span>Built for the curious. Open to inspection.</span>
-              </p>
-              <a href="#lab" className="button button-acid">
-                Explore the lab <ArrowUpRight size={18} />
-              </a>
-              <a className="scroll-cue" href="#process">
-                SCROLL TO INVESTIGATE <ArrowDown size={17} />
-              </a>
-            </div>
-          </section>
-          <div className="capability-strip">
-            <span>READ BETWEEN THE BYTES</span>
-            {[
-              "BINARY ANALYSIS",
-              "PATTERN RECOGNITION",
-              "CRYPTOGRAPHIC INTELLIGENCE",
-            ].map((item) => (
-              <span key={item}>
-                <Plus size={13} />
-                {item}
-              </span>
-            ))}
-            <span className="strip-end">
-              <Cpu size={15} /> BLACKBOXAI
-            </span>
           </div>
           <Pipeline />
           <SignalPassage />

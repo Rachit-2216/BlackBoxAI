@@ -16,7 +16,7 @@ Browser checks expect the local preview at `http://127.0.0.1:5186`; start it wit
 
 ## Experience
 
-- A lazy-loaded Three.js silver core that responds to the pointer, scroll, and its open/reassemble button.
+- A lazy-loaded Three.js silver core that opens on scroll. The hero holds for 420 pixels of native scrolling: the core opens in the first 320 pixels, stays open briefly, then the page continues. Scrolling back reassembles it. Reduced motion skips the pin and shows a stable partially open core.
 - A scroll-linked analysis sequence with three manually selectable stages.
 - A browser-only evidence lab with three illustrative samples, keyboard-accessible tabs, scan replay, and JSON demo-report export.
 - Responsive navigation, expandable field notes, reduced-motion support, and a static WebGL fallback.

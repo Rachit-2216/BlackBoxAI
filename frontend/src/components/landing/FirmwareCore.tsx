@@ -8,11 +8,10 @@ import {
 } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Environment, Lightformer, RoundedBox } from "@react-three/drei";
-import { MathUtils, type Group } from "three";
+import { MathUtils, type Group, type PointLight } from "three";
 import type { MotionValue } from "motion/react";
 
 type Props = {
-  opened: boolean;
   progress: MotionValue<number>;
   reduced: boolean;
 };
@@ -22,16 +21,18 @@ const blocks = Array.from({ length: 27 }, (_, i) => ({
   z: Math.floor(i / 9) - 1,
 }));
 
-function Assembly({ opened, progress, reduced }: Props) {
+function Assembly({ progress, reduced }: Props) {
   const assembly = useRef<Group>(null);
   const pieces = useRef<(Group | null)[]>([]);
   const scanner = useRef<Group>(null);
+  const glow = useRef<PointLight>(null);
   useFrame(({ clock, pointer }, delta) => {
     if (!assembly.current) return;
     const time = reduced ? 0 : clock.elapsedTime;
-    const scroll = reduced ? 0 : progress.get();
-    const expand = (opened ? 0.62 : 0) + scroll * 0.8;
-    const damping = 1 - Math.exp(-Math.min(delta, 0.1) * 5);
+    const scroll = reduced ? 0.45 : progress.get();
+    const expand = scroll * 0.9;
+    const damping = 1 - Math.exp(-Math.min(delta, 0.1) * 10);
+    if (glow.current) glow.current.intensity = 2 + scroll * 7;
     if (scanner.current)
       scanner.current.position.y = reduced ? 0.3 : Math.sin(time * 0.65) * 1.2;
     assembly.current.scale.setScalar(0.9 / (1 + expand * 0.45));
@@ -44,7 +45,7 @@ function Assembly({ opened, progress, reduced }: Props) {
       assembly.current.rotation.y,
       -0.63 +
         (reduced ? 0 : Math.sin(time * 0.17) * 0.15 + pointer.x * 0.18) +
-        scroll * 1.2,
+        scroll * 0.65,
       damping,
     );
     assembly.current.rotation.z = MathUtils.lerp(
@@ -112,7 +113,7 @@ function Assembly({ opened, progress, reduced }: Props) {
           )}
         </group>
       ))}
-      <pointLight color="#d9ff54" intensity={opened ? 9 : 2} distance={5} />
+      <pointLight ref={glow} color="#d9ff54" intensity={2} distance={5} />
       <group ref={scanner}>
         <mesh position={[0, 0, 1.36]}>
           <boxGeometry args={[2.54, 0.012, 0.012]} />
