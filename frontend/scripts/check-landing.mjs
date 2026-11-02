@@ -28,11 +28,66 @@ async function noOverflow() {
     "Horizontal overflow",
   );
 }
+async function heroFits() {
+  const fit = await page.evaluate(() => {
+    const cta = document
+      .querySelector(".hero-bottom .button")
+      .getBoundingClientRect();
+    const toggle = document
+      .querySelector(".core-toggle")
+      .getBoundingClientRect();
+    const strip = document
+      .querySelector(".capability-strip")
+      .getBoundingClientRect();
+    return {
+      cta: cta.bottom,
+      toggle: toggle.bottom,
+      strip: strip.top,
+      height: innerHeight,
+    };
+  });
+  assert(
+    fit.cta <= fit.height - 12,
+    `Hero action below viewport: ${JSON.stringify(fit)}`,
+  );
+  assert(fit.toggle < fit.cta, "Core control overlaps primary action");
+  assert(
+    fit.strip < fit.height,
+    "Hero does not leave a hint of the next section",
+  );
+}
+async function checkContrast() {
+  const contrast = await page.locator(".button-acid").evaluate((element) => {
+    const css = getComputedStyle(element);
+    function luminance(color) {
+      const rgb = color
+        .match(/[\d.]+/g)
+        .slice(0, 3)
+        .map(Number)
+        .map((value) => {
+          value /= 255;
+          return value <= 0.04045
+            ? value / 12.92
+            : ((value + 0.055) / 1.055) ** 2.4;
+        });
+      return rgb[0] * 0.2126 + rgb[1] * 0.7152 + rgb[2] * 0.0722;
+    }
+    const foreground = luminance(css.color),
+      background = luminance(css.backgroundColor);
+    return (
+      (Math.max(foreground, background) + 0.05) /
+      (Math.min(foreground, background) + 0.05)
+    );
+  });
+  assert(contrast >= 7, `Neon CTA contrast too low: ${contrast}`);
+}
 try {
   await page.goto(base, { waitUntil: "networkidle" });
   await page.locator("canvas").waitFor({ timeout: 30000 });
   await pause();
   await noOverflow();
+  await heroFits();
+  await checkContrast();
   await page.screenshot({ path: `${directory}/landing-desktop.png` });
   const canvasPng = await page.locator("canvas").screenshot();
   const pixels = await page.evaluate(async (base64) => {
@@ -77,6 +132,37 @@ try {
       .then((value) => value.includes("AES substitution pattern")),
   );
   await page.screenshot({ path: `${directory}/landing-process.png` });
+  await page.evaluate(() => {
+    const section = document.querySelector(".signal-passage");
+    scrollTo({
+      top:
+        section.getBoundingClientRect().top +
+        scrollY +
+        (section.offsetHeight - innerHeight) * 0.52,
+      behavior: "instant",
+    });
+  });
+  await page.waitForTimeout(1300);
+  assert.equal(
+    await page.locator(".signal-code").innerText(),
+    "SBOX / ROUND / ROTATE / XOR",
+  );
+  await page.screenshot({ path: `${directory}/landing-signal.png` });
+  await page.evaluate(() => {
+    const section = document.querySelector(".signal-passage");
+    scrollTo({
+      top:
+        section.getBoundingClientRect().top +
+        scrollY +
+        (section.offsetHeight - innerHeight) * 0.94,
+      behavior: "instant",
+    });
+  });
+  await page.waitForTimeout(800);
+  assert.equal(
+    await page.locator(".signal-code").innerText(),
+    "OFFSET / PRIMITIVE / CONFIDENCE",
+  );
   await page.getByRole("button", { name: /Network gateway/ }).click();
   await page.getByRole("tab", { name: "Primitives" }).click();
   await pause();
@@ -115,11 +201,27 @@ try {
   await page.evaluate(() => scrollTo({ top: 0, behavior: "instant" }));
   await pause();
   await noOverflow();
+  await heroFits();
   await page.screenshot({ path: `${directory}/landing-wide.png` });
+  for (const viewport of [
+    { width: 1920, height: 935 },
+    { width: 1440, height: 900 },
+    { width: 1366, height: 768 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.evaluate(() => scrollTo({ top: 0, behavior: "instant" }));
+    await pause();
+    await heroFits();
+    await noOverflow();
+    await page.screenshot({
+      path: `${directory}/landing-${viewport.width}x${viewport.height}.png`,
+    });
+  }
   await page.setViewportSize({ width: 390, height: 844 });
   await page.evaluate(() => scrollTo({ top: 0, behavior: "instant" }));
   await pause();
   await noOverflow();
+  await heroFits();
   await page.screenshot({ path: `${directory}/landing-mobile.png` });
   await page.getByRole("button", { name: "Open navigation" }).click();
   await page
@@ -143,6 +245,13 @@ try {
   );
   await noOverflow();
   await page.screenshot({ path: `${directory}/landing-mobile-lab.png` });
+  await page.evaluate(() => {
+    const section = document.querySelector('.signal-passage');
+    scrollTo({ top: section.getBoundingClientRect().top + scrollY + (section.offsetHeight - innerHeight) * .52, behavior: 'instant' });
+  });
+  await page.waitForTimeout(1200);
+  await noOverflow();
+  await page.screenshot({path:`${directory}/landing-mobile-signal.png`});
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.reload({ waitUntil: "networkidle" });
   await page.evaluate(() => scrollTo({ top: 0, behavior: "instant" }));
@@ -168,7 +277,14 @@ try {
     JSON.stringify(
       {
         result: "PASS",
-        viewports: ["1440x1024", "1920x1080", "390x844"],
+        viewports: [
+          "1440x1024",
+          "1920x1080",
+          "1920x935",
+          "1440x900",
+          "1366x768",
+          "390x844",
+        ],
         canvasPixels: pixels,
         checks: [
           "WebGL",
@@ -184,6 +300,9 @@ try {
           "reduced motion",
           "no backend requests",
           "no browser errors",
+          "hero fits viewport",
+          "CTA contrast >= 7:1",
+          "scroll morph progression",
         ],
       },
       null,

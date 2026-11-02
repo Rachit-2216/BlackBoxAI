@@ -34,6 +34,8 @@ import {
   X,
 } from "lucide-react";
 import EvidenceLab from "@/components/landing/EvidenceLab";
+import { DecodeText, ScrollStatement } from "@/components/landing/MotionType";
+import SignalPassage from "@/components/landing/SignalPassage";
 
 const FirmwareCore = lazy(() => import("@/components/landing/FirmwareCore"));
 const repository = "https://github.com/Rachit-2216/BlackBoxAI";
@@ -108,8 +110,12 @@ function Reveal({
   return (
     <motion.div
       className={className}
-      initial={{ opacity: reduced ? 1 : 0, y: reduced ? 0 : 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={{
+        opacity: reduced ? 1 : 0,
+        y: reduced ? 0 : 38,
+        filter: reduced ? "none" : "blur(5px)",
+      }}
+      whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
       viewport={{ once: true, amount: 0.15 }}
       transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
     >
@@ -148,9 +154,9 @@ function Pipeline() {
       </div>
       <Reveal className="section-intro">
         <h2 id="process-heading">
-          A black box.
+          <DecodeText text="A black box." />
           <br />
-          An open investigation.
+          <DecodeText text="An open investigation." />
         </h2>
         <p>
           Take firmware apart.
@@ -174,7 +180,9 @@ function Pipeline() {
               <span className="step-index">0{index + 1}</span>
               <div>
                 <span className="mono-label">{stage.label}</span>
-                <h3>{stage.title}</h3>
+                <h3>
+                  <DecodeText text={stage.title} />
+                </h3>
                 <p>{stage.copy}</p>
                 <button className="text-link" onClick={() => setActive(index)}>
                   Inspect this stage <ArrowUpRight size={15} />
@@ -240,10 +248,15 @@ function Pipeline() {
               transition={{ duration: 0.15 }}
             >
               {stages[active].code.map((line, i) => (
-                <p key={line}>
+                <motion.p
+                  key={line}
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.08 }}
+                >
                   <span>{String(i + 1).padStart(2, "0")}</span>
                   <code>{line}</code>
-                </p>
+                </motion.p>
               ))}
             </motion.div>
           </AnimatePresence>
@@ -315,6 +328,8 @@ export default function Landing() {
   const reduced = !!useReducedMotion();
   const { scrollYProgress } = useScroll();
   const progress = useSpring(scrollYProgress, { stiffness: 100, damping: 30 });
+  const beaconY = useTransform(progress, [0, 1], [0, 250]);
+  const beaconRotation = useTransform(progress, [0, 1], [0, 720]);
   const { scrollYProgress: heroProgress } = useScroll({
     target: hero,
     offset: ["start start", "end start"],
@@ -334,6 +349,18 @@ export default function Landing() {
           Skip to content
         </a>
         <motion.div className="reading-progress" style={{ scaleX: progress }} />
+        <div className="page-trace" aria-hidden="true">
+          <span />
+          <motion.i
+            style={{
+              y: reduced ? 0 : beaconY,
+              rotate: reduced ? 0 : beaconRotation,
+            }}
+          />
+          <b />
+          <b />
+          <b />
+        </div>
         <header className="site-header">
           <a href="#" className="brand" aria-label="BlackBoxAI home">
             <span className="brand-symbol">
@@ -401,9 +428,12 @@ export default function Landing() {
                 <span /> LOOK BENEATH THE BINARY
               </span>
               <h1 id="hero-heading">
-                Nothing stays
+                <DecodeText text="Nothing stays" />
                 <br />
-                in the <span>black box.</span>
+                in the{" "}
+                <span>
+                  <DecodeText text="black box." />
+                </span>
               </h1>
               <p>
                 Cryptographic patterns. Hidden in firmware.
@@ -477,6 +507,7 @@ export default function Landing() {
             </span>
           </div>
           <Pipeline />
+          <SignalPassage />
           <section
             className="lab-section section-pad"
             id="lab"
@@ -492,9 +523,11 @@ export default function Landing() {
                   <span /> THE INTERACTIVE LAB
                 </span>
                 <h2 id="lab-heading">
-                  Less mystery.
+                  <DecodeText text="Less mystery." />
                   <br />
-                  <span>More evidence.</span>
+                  <span>
+                    <DecodeText text="More evidence." />
+                  </span>
                 </h2>
               </div>
               <p>
@@ -527,6 +560,7 @@ export default function Landing() {
                 <span>investigable.</span>
               </h2>
             </Reveal>
+            <ScrollStatement text="The most interesting part of a binary is what it doesn't tell you. Yet." />
             <div className="principle-grid">
               {[
                 {
@@ -553,7 +587,9 @@ export default function Landing() {
                     <item.icon size={28} strokeWidth={1.2} />
                     <span>0{i + 1}</span>
                   </div>
-                  <h3>{item.title}</h3>
+                  <h3>
+                    <DecodeText text={item.title} />
+                  </h3>
                   <p>{item.text}</p>
                   <span className="mono-label">{item.tag}</span>
                 </Reveal>
@@ -568,7 +604,8 @@ export default function Landing() {
               <h2>
                 Go on.
                 <br />
-                Break it open<span>.</span>
+                <DecodeText text="Break it open" />
+                <span>.</span>
               </h2>
               <a href="#lab" className="button button-dark">
                 Enter the lab <ArrowUpRight size={18} />

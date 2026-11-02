@@ -27,6 +27,8 @@ Browser checks expect the local preview at `http://127.0.0.1:5186`; start it wit
 - `src/landing.css`: responsive layouts, typography, color tokens, and CSS motion.
 - `src/components/landing/FirmwareCore.tsx`: procedural 3D geometry, lighting, pointer and scroll response.
 - `src/components/landing/EvidenceLab.tsx`: sample data and interactive evidence views.
+- `src/components/landing/MotionType.tsx`: layout-stable decoding text and scroll-linked word reveals.
+- `src/components/landing/SignalPassage.tsx`: pinned binary/pattern/evidence choreography with moving data slabs.
 
 All sample results are illustrative and explicitly marked. The older API-connected tool components remain available in source but are not mounted in `App.tsx`.
 

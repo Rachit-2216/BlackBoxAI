@@ -25,12 +25,15 @@ const blocks = Array.from({ length: 27 }, (_, i) => ({
 function Assembly({ opened, progress, reduced }: Props) {
   const assembly = useRef<Group>(null);
   const pieces = useRef<(Group | null)[]>([]);
+  const scanner = useRef<Group>(null);
   useFrame(({ clock, pointer }, delta) => {
     if (!assembly.current) return;
     const time = reduced ? 0 : clock.elapsedTime;
     const scroll = reduced ? 0 : progress.get();
     const expand = (opened ? 0.62 : 0) + scroll * 0.8;
     const damping = 1 - Math.exp(-Math.min(delta, 0.1) * 5);
+    if (scanner.current)
+      scanner.current.position.y = reduced ? 0.3 : Math.sin(time * 0.65) * 1.2;
     assembly.current.scale.setScalar(0.9 / (1 + expand * 0.45));
     assembly.current.rotation.x = MathUtils.lerp(
       assembly.current.rotation.x,
@@ -71,7 +74,13 @@ function Assembly({ opened, progress, reduced }: Props) {
       );
       piece.rotation.z = MathUtils.lerp(
         piece.rotation.z,
-        expand * block.x * block.y * 0.12,
+        expand * block.x * block.y * 0.32,
+        damping,
+      );
+      piece.rotation.y = MathUtils.lerp(
+        piece.rotation.y,
+        expand * block.z * 0.18 +
+          (reduced ? 0 : Math.sin(time * 0.45 + i) * expand * 0.06),
         damping,
       );
     });
@@ -88,10 +97,10 @@ function Assembly({ opened, progress, reduced }: Props) {
         >
           <RoundedBox args={[0.86, 0.86, 0.86]} radius={0.055} smoothness={3}>
             <meshStandardMaterial
-              color={i === 13 ? "#d9ff54" : "#b8bec0"}
+              color={i === 13 ? "#d5f28b" : "#b8bec0"}
               metalness={i === 13 ? 0.15 : 0.87}
               roughness={0.24}
-              emissive={i === 13 ? "#d9ff54" : "#000000"}
+              emissive={i === 13 ? "#d5f28b" : "#000000"}
               emissiveIntensity={i === 13 ? 2.1 : 0}
             />
           </RoundedBox>
@@ -104,6 +113,12 @@ function Assembly({ opened, progress, reduced }: Props) {
         </group>
       ))}
       <pointLight color="#d9ff54" intensity={opened ? 9 : 2} distance={5} />
+      <group ref={scanner}>
+        <mesh position={[0, 0, 1.36]}>
+          <boxGeometry args={[2.54, 0.012, 0.012]} />
+          <meshBasicMaterial color="#a4d6e5" transparent opacity={0.7} />
+        </mesh>
+      </group>
     </group>
   );
 }

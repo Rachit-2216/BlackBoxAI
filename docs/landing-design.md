@@ -19,4 +19,10 @@ The 3D chunk is lazy-loaded, rendering pauses outside the viewport, and device p
 
 ## Verification
 
+### Motion and readability update (2026-11-03)
+
+The hero uses a viewport-height grid so the core control and primary CTA remain visible at standard desktop and mobile dimensions, including 1920x935. The accent is a softer citron with explicit dark text and icon colors; supporting copy is brighter. CTA contrast is checked at a minimum 7:1.
+
+Headlines decode on entry and pointer hover using layout-stable text layers. A pinned, scroll-driven passage moves physical data slabs through binary, pattern, and evidence states. A scroll-linked statement reveals word colors, a shard traces page progress, terminal lines stagger, and core blocks rotate independently around a moving scan line. Motion uses existing Motion and Three.js dependencies. Reduced-motion mode removes decoding, parallax, looping effects, and sticky scrolling duration.
+
 Run lint and production build. Check desktop at 1440 and 1920 pixels, mobile at 390 pixels, no horizontal overflow, keyboard navigation, sample switching, all evidence tabs, scan replay, report export, FAQ, reduced motion, and visible canvas pixels. The existing Vercel build/output settings remain applicable.
