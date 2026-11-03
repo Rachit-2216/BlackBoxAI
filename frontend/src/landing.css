@@ -279,7 +279,7 @@ section {
 .hero h1 {
   font-size: 82px;
   font-weight: 500;
-  line-height: 1.02;
+  line-height: 1.12;
   margin: 19px 0 18px;
 }
 .hero h1 > span {
@@ -1473,7 +1473,7 @@ h2 {
   }
   .hero h1 {
     font-size: 54px;
-    line-height: 1.05;
+    line-height: 1.12;
     margin-top: 18px;
   }
   .hero-eyebrow {
@@ -1933,7 +1933,8 @@ h2 {
 .decode-live {
   position: absolute;
   inset: 0;
-  overflow: hidden;
+  overflow: visible;
+  clip-path: inset(-0.2em -0.1em -0.3em);
 }
 .hero h1 > .decode-text {
   color: #f0f3e9;
